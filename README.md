@@ -82,13 +82,6 @@ To deploy the application online, use **Gradio's share feature**:
 - ✅ Add more AI-driven weather predictions.
 - ✅ Enhance UI with custom themes and animations.
 
-## Contributing
-Feel free to contribute! Fork the repository, create a new branch, and submit a pull request.
 
-## License
-This project is licensed under the **MIT License**.
-
----
-🚀 **Built with Python, AI, and ❤️**
 
 
