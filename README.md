@@ -1,5 +1,4 @@
-# AI Chatbot & Weather Forecasting App
-
+# AI-Powered-Multimodal-Assistant-Chat-Weather-and-Voice-Interaction
 ## Overview
 This project is a **multi-functional AI-powered application** that provides:
 - **AI Chatbot**: Interact with an AI chatbot powered by Google's Gemini API.
