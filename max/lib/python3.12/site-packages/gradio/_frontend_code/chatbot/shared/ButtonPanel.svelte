@@ -6,7 +6,9 @@
 	import { Retry, Undo, Edit, Check, Clear } from "@gradio/icons";
 	import { IconButtonWrapper, IconButton } from "@gradio/atoms";
 	import { all_text, is_all_text } from "./utils";
+	import type { I18nFormatter } from "js/core/src/gradio_helper";
 
+	export let i18n: I18nFormatter;
 	export let likeable: boolean;
 	export let feedback_options: string[];
 	export let show_retry: boolean;
@@ -14,6 +16,7 @@
 	export let show_edit: boolean;
 	export let in_edit_mode: boolean;
 	export let show_copy_button: boolean;
+	export let watermark: string | null = null;
 	export let message: NormalisedMessage | NormalisedMessage[];
 	export let position: "right" | "left";
 	export let avatar: FileData | null;
@@ -36,13 +39,13 @@
 		<IconButtonWrapper top_panel={false}>
 			{#if in_edit_mode}
 				<IconButton
-					label="Submit"
+					label={i18n("chatbot.submit")}
 					Icon={Check}
 					on:click={() => handle_action("edit_submit")}
 					disabled={generating}
 				/>
 				<IconButton
-					label="Cancel"
+					label={i18n("chatbot.cancel")}
 					Icon={Clear}
 					on:click={() => handle_action("edit_cancel")}
 					disabled={generating}
@@ -52,19 +55,20 @@
 					<Copy
 						value={message_text}
 						on:copy={(e) => dispatch("copy", e.detail)}
+						{watermark}
 					/>
 				{/if}
 				{#if show_retry}
 					<IconButton
 						Icon={Retry}
-						label="Retry"
+						label={i18n("chatbot.retry")}
 						on:click={() => handle_action("retry")}
 						disabled={generating}
 					/>
 				{/if}
 				{#if show_undo}
 					<IconButton
-						label="Undo"
+						label={i18n("chatbot.undo")}
 						Icon={Undo}
 						on:click={() => handle_action("undo")}
 						disabled={generating}
@@ -72,7 +76,7 @@
 				{/if}
 				{#if show_edit}
 					<IconButton
-						label="Edit"
+						label={i18n("chatbot.edit")}
 						Icon={Edit}
 						on:click={() => handle_action("edit")}
 						disabled={generating}
@@ -83,6 +87,7 @@
 						{handle_action}
 						{feedback_options}
 						selected={current_feedback}
+						{i18n}
 					/>
 				{/if}
 			{/if}

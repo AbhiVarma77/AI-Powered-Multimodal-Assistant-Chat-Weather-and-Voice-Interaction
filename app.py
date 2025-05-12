@@ -18,13 +18,14 @@ model = genai.GenerativeModel("gemini-1.5-pro")
 # System message
 system_message = "You act like ChatGPT but powered by Gemini AI."
 
+
 def stream_response(message, history):
     history_langchain_format = [SystemMessage(content=system_message)]
-    
+
     for human, ai in history:
         history_langchain_format.append(HumanMessage(content=human))
         history_langchain_format.append(AIMessage(content=ai))
-    
+
     if message:
         history_langchain_format.append(HumanMessage(content=message))
         partial_message = ""
@@ -32,16 +33,23 @@ def stream_response(message, history):
         partial_message += response.text
         return partial_message
 
+
 # Define the UI
-with gr.Blocks(theme=gr.themes.Soft(), css="body { background-color: #1e1e1e; color: white; }") as demo:
+with gr.Blocks(
+    theme=gr.themes.Soft(), css="body { background-color: #1e1e1e; color: white; }"
+) as demo:
     gr.Markdown("""<h1 style='text-align: center; color: #FFD700;'>Gemini AI Chat Assistant</h1>
                 <p style='text-align: center;'>Ask me anything you want?</p>""")
-    
-    chatbot = gr.ChatInterface(fn=stream_response,
-                               textbox=gr.Textbox(placeholder="Type your message...",
-                                                  show_label=False,
-                                                  autofocus=True,
-                                                  container=False))
+
+    chatbot = gr.ChatInterface(
+        fn=stream_response,
+        textbox=gr.Textbox(
+            placeholder="Type your message...",
+            show_label=False,
+            autofocus=True,
+            container=False,
+        ),
+    )
 
 # Launch the Gradio app
 demo.launch(share=True)
