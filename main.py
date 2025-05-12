@@ -19,17 +19,55 @@ model = genai.GenerativeModel("gemini-1.5-pro")
 # AI Chatbot System Message
 system_message = "You act like ChatGPT but powered by AI."
 
+
 def stream_response(message, history):
     history_langchain_format = [SystemMessage(content=system_message)]
-    
+
     for human, ai in history:
         history_langchain_format.append(HumanMessage(content=human))
         history_langchain_format.append(AIMessage(content=ai))
-    
+
     if message:
         history_langchain_format.append(HumanMessage(content=message))
         response = model.generate_content(message)
         return response.text
+
+
+# Function to fetch weather data
+def get_weather(city):
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={OPENWEATHER_API_KEY}&units=metric"
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        data = response.json()
+        return {
+            "city": data["name"],
+            "temperature": data["main"]["temp"],
+            "weather": data["weather"][0]["description"],
+            "humidity": data["main"]["humidity"],
+            "wind_speed": data["wind"]["speed"],
+        }
+    else:
+        return {"error": "City not found!"}
+
+
+# Function to generate weather insights using AI
+def generate_weather_report(city):
+    weather_data = get_weather(city)
+
+    if "error" in weather_data:
+        return weather_data["error"]
+
+    prompt = f"""Generate a detailed weather forecast for {city} based on the following data:
+    - Temperature: {weather_data["temperature"]}°C
+    - Weather Condition: {weather_data["weather"]}
+    - Humidity: {weather_data["humidity"]}%
+    - Wind Speed: {weather_data["wind_speed"]} km/h
+    Provide recommendations based on the forecast (e.g., safety precautions)."""
+
+    response = model.generate_content(prompt)
+    return response.text
+
 
 # Speech-to-Text Function
 def speech_to_text(audio):
@@ -43,12 +81,14 @@ def speech_to_text(audio):
         except sr.RequestError:
             return "Error connecting to speech recognition service."
 
+
 # Convert AI's text response to speech
 def text_to_speech(text):
     tts = gTTS(text=text, lang="en")
     temp_audio = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
     tts.save(temp_audio.name)
     return temp_audio.name  # Return file path
+
 
 # Speech-to-Speech Processing
 def speech_to_speech(audio):
@@ -60,49 +100,73 @@ def speech_to_speech(audio):
     audio_path = text_to_speech(ai_response)  # Convert to speech
     return ai_response, audio_path
 
+
 # Gradio UI
 def gradio_ui():
-    with gr.Blocks(theme=gr.themes.Soft(), css="body { background-color: #1e1e1e; color: white; }") as demo:
+    with gr.Blocks(
+        theme=gr.themes.Soft(), css="body { background-color: #1e1e1e; color: white; }"
+    ) as demo:
         gr.Markdown("""<h1 style='text-align: center; color: #FFD700;'>AI Chatbot</h1>
                     <p style='text-align: center;'>Ask me anything, get weather updates, or use voice interaction!</p>""")
-        
-        choice = gr.Radio(["Chatbot", "Weather", "Speech-to-Speech"], label="Select Mode")
+
+        choice = gr.Radio(
+            ["Chatbot", "Weather", "Speech-to-Speech"], label="Select Mode"
+        )
         weather_section = gr.Column(visible=False)
         chatbot_section = gr.Column(visible=False)
         speech_section = gr.Column(visible=False)
 
         with weather_section:
-            city_input = gr.Textbox(placeholder="Enter city name for weather", label="City Name")
+            city_input = gr.Textbox(
+                placeholder="Enter city name for weather", label="City Name"
+            )
             weather_output = gr.Textbox(label="Weather Report")
-            
+
             def fetch_weather(city):
-                return generate_weather_report(city) if city else "Please enter a valid city."
-            
+                return (
+                    generate_weather_report(city)
+                    if city
+                    else "Please enter a valid city."
+                )
+
             weather_button = gr.Button("Get Weather")
-            weather_button.click(fetch_weather, inputs=city_input, outputs=weather_output)
+            weather_button.click(
+                fetch_weather, inputs=city_input, outputs=weather_output
+            )
 
         with chatbot_section:
             chatbot = gr.ChatInterface(fn=stream_response, type="messages")
 
         with speech_section:
-            gr.Markdown("🎙️ **Ask your question by speaking, and AI will reply in voice!**")
+            gr.Markdown(
+                "🎙️ **Ask your question by speaking, and AI will reply in voice!**"
+            )
             speech_input = gr.Audio(type="filepath", label="🎤 Speak here")
             text_output = gr.Textbox(label="AI Response (Text)")
             audio_output = gr.Audio(label="AI Response (Speech)")
 
             speech_button = gr.Button("Get AI Response")
-            speech_button.click(speech_to_speech, inputs=speech_input, outputs=[text_output, audio_output])
+            speech_button.click(
+                speech_to_speech,
+                inputs=speech_input,
+                outputs=[text_output, audio_output],
+            )
 
         def update_visibility(selected):
             return (
                 gr.update(visible=(selected == "Weather")),
                 gr.update(visible=(selected == "Chatbot")),
-                gr.update(visible=(selected == "Speech-to-Speech"))
+                gr.update(visible=(selected == "Speech-to-Speech")),
             )
 
-        choice.change(update_visibility, inputs=choice, outputs=[weather_section, chatbot_section, speech_section])
+        choice.change(
+            update_visibility,
+            inputs=choice,
+            outputs=[weather_section, chatbot_section, speech_section],
+        )
 
     demo.launch(share=True)
+
 
 # Run Gradio UI
 if __name__ == "__main__":
